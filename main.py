@@ -24,7 +24,7 @@ if choice == 1:
             program += line + '\n'
         execute(program)
 else:
-    filename = input('Podaj nazwę pliku: ')
+    filename = input('Podaj nazwę pliku (pozostaw puste by załadować examples/collatz.kub): ') or 'examples/collatz.kub'
     with open(filename, 'r') as file:
         program = file.read()
     execute(program)
