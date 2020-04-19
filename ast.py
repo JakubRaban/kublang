@@ -25,18 +25,33 @@ class Node(abc.ABC):
         pass
 
 
-class Input(Node):
+class Program(Node):
     def __init__(self, program):
         self.program = program
 
     def evaluate(self, variable_array):
-        return self.program.evaluate(variable_array)
+        self.program.evaluate(variable_array)
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.program]
+
+
+class Lines(Node):
+    def __init__(self, lines: List[Node]):
+        self.lines = lines
+
+    def evaluate(self, variable_array):
+        for line in self.lines:
+            line.evaluate(variable_array)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
 
     def get_children(self) -> List[Node]:
-        return [self.program]
+        return self.lines
 
 
 class Number(Node):
@@ -62,10 +77,11 @@ class BinaryMathOperator(Node):
     def evaluate(self, variable_array):
         l, r = self.left.evaluate(variable_array), self.right.evaluate(variable_array)
         helpers.check_type_match(l, r)
-        helpers.check_numeric_type(l, r)
+        helpers.check_numeric_or_string_type(l, r)
         if self.operation == '+':
             return l + r
-        elif self.operation == '-':
+        helpers.check_numeric_type(l, r)
+        if self.operation == '-':
             return l - r
         elif self.operation == '*':
             return l * r
@@ -73,6 +89,8 @@ class BinaryMathOperator(Node):
             return l / r
         elif self.operation == '^':
             return l ** r
+        elif self.operation == '%':
+            return l % r
 
     def get_children(self) -> List[Node]:
         return [self.left, self.right]
@@ -172,7 +190,8 @@ class Assignment(Node):
         self.value = value
 
     def evaluate(self, variable_array):
-        variable_array.assign(self.var_name.evaluate(variable_array), self.value.evaluate(variable_array))
+        l, r = self.var_name.evaluate(variable_array), self.value.evaluate(variable_array)
+        variable_array.assign(l, r)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -286,6 +305,27 @@ class IfStatement(Node):
         return [self.condition, self.statement]
 
 
+class IfElseStatement(Node):
+    def __init__(self, condition, on_true_statement, on_false_statement):
+        self.condition = condition
+        self.on_true_statement = on_true_statement
+        self.on_false_statement = on_false_statement
+
+    def evaluate(self, variable_array):
+        condition = self.condition.evaluate(variable_array)
+        helpers.check_boolean_type(condition)
+        if condition:
+            self.on_true_statement.evaluate(variable_array)
+        else:
+            self.on_false_statement.evaluate(variable_array)
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.condition, self.on_true_statement, self.on_false_statement]
+
+
 class WhileStatement(Node):
     def __init__(self, condition, statement):
         self.condition = condition
@@ -303,3 +343,49 @@ class WhileStatement(Node):
 
     def get_children(self) -> List:
         return [self.condition, self.statement]
+
+
+class Print(Node):
+    def __init__(self, expression):
+        self.expression = expression
+
+    def evaluate(self, variable_array):
+        print(self.expression.evaluate(variable_array))
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.expression]
+
+
+class IntToFloat(Node):
+    def __init__(self, number):
+        self.number = number
+
+    def evaluate(self, variable_array):
+        number = self.number.evaluate(variable_array)
+        helpers.check_int_type(number)
+        return float(number)
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.number]
+
+
+class FloatToInt(Node):
+    def __init__(self, number):
+        self.number = number
+
+    def evaluate(self, variable_array):
+        number = self.number.evaluate(variable_array)
+        helpers.check_float_type(number)
+        return int(number)
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.number]

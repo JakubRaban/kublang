@@ -1,0 +1,14 @@
+int number := 12
+int counter := 0
+while(number > 1) {
+    if(number % 2 = 0) {
+        number := floattoint(number / 2)
+    } else {
+        number := 3 * number + 1
+    }
+    counter := counter + 1
+    print(number)
+}
+print("")
+print("Liczba iteracji: ")
+print(counter)

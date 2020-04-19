@@ -1,16 +1,32 @@
 
 import ply.lex as lex
 
+reserved = {
+    'if': 'IF',
+    'else': 'ELSE',
+    'while': 'WHILE',
+    'true': 'TRUE',
+    'false': 'FALSE',
+    'int': 'INT',
+    'float': 'FLOAT',
+    'string': 'STRING',
+    'boolean': 'BOOLEAN',
+    'fun': 'FUN',
+    'print': 'PRINT',
+    'inttofloat': 'TYPECONV',
+    'floattoint': 'TYPECONV'
+}
+
 tokens = [
-    'PLUS', 'MINUS', 'TIMES', 'DIV', 'POWER', 'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'ASSIGN', 'EQ', 'NEQ',
-    'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'SEP', 'IF', 'ELSE', 'FUN', 'WHILE', 'INT', 'BOOLEAN', 'STRING',
-    'PRINT', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'TRUE', 'FALSE', 'NEWLINE', 'NOT', 'UMINUS', 'FLOAT'
-]
+    'PLUS', 'MINUS', 'TIMES', 'DIV', 'MOD', 'POWER', 'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'ASSIGN', 'EQ', 'NEQ',
+    'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'SEP', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'NEWLINE', 'NOT', 'UMINUS'
+] + list(reserved.values())
 
 t_PLUS    = r'\+'
 t_MINUS   = r'-'
 t_TIMES   = r'\*'
 t_DIV     = r'/'
+t_MOD     = r'%'
 t_POWER   = r'\^'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
@@ -25,6 +41,8 @@ t_LTE     = r'<='
 t_GT      = r'>'
 t_GTE     = r'>='
 t_COMMA   = r'\,'
+t_SEP     = r';'
+
 
 def t_OR(t):
     r"""\|\|"""
@@ -54,70 +72,9 @@ def t_TEXT(t):
     return t
 
 
-def t_IF(t):
-    r"""if"""
-    return t
-
-
-def t_ELSE(t):
-    r"""else"""
-    return t
-
-
-def t_FUN(t):
-    r"""fun"""
-    return t
-
-
-def t_WHILE(t):
-    r"""while"""
-    return t
-
-
-def t_BOOLEAN(t):
-    r"""boolean"""
-    return t
-
-
-def t_INT(t):
-    r"""int"""
-    return t
-
-
-def t_STRING(t):
-    r"""string"""
-    return t
-
-
-def t_FLOAT(t):
-    r"""float"""
-    return t
-
-
-def t_PRINT(t):
-    r"""print"""
-    return t
-
-
-def t_TRUE(t):
-    r"""true"""
-    t.value = True
-    return t
-
-
-def t_FALSE(t):
-    r"""false"""
-    t.value = False
-    return t
-
-
-def t_TYPECONV(t):
-    r"""(inttofloat|floattoint)"""
-    return t
-
-
 def t_NAME(t):
     r"""[a-zA-Z_][a-zA-Z0-9_]*"""
+    t.type = reserved.get(t.value, 'NAME')
     return t
 
 

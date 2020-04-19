@@ -39,4 +39,17 @@ def check_string_type(*values):
 def check_int_type(*values):
     for value in values:
         if type(value) != int:
-            raise TypeError("All operands must be string for this operation")
+            raise TypeError("All operands must be integer for this operation")
+
+
+def check_float_type(*values):
+    for value in values:
+        if type(value) != float:
+            raise TypeError("All operands must be float for this operation")
+
+
+def check_numeric_or_string_type(*values):
+    try:
+        check_numeric_type(*values)
+    except TypeError:
+        check_string_type(*values)
