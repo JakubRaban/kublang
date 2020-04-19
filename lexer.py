@@ -11,22 +11,29 @@ t_PLUS    = r'\+'
 t_MINUS   = r'-'
 t_TIMES   = r'\*'
 t_DIV     = r'/'
-t_POWER   = r'\*\*'
+t_POWER   = r'\^'
 t_LPAREN  = r'\('
 t_RPAREN  = r'\)'
 t_LBRACE  = r'{'
 t_RBRACE  = r'}'
-t_ASSIGN  = r'='
+t_ASSIGN  = r':='
 t_NOT     = r'!'
-t_EQ      = r'=='
-t_NEQ     = r'!='
+t_EQ      = r'='
+t_NEQ     = r'≠'
 t_LT      = r'<'
 t_LTE     = r'<='
 t_GT      = r'>'
 t_GTE     = r'>='
-t_OR      = r'\|\|'
-r_AND     = r'&&'
 t_COMMA   = r'\,'
+
+def t_OR(t):
+    r"""\|\|"""
+    return t
+
+
+def t_AND(t):
+    r"""&&"""
+    return t
 
 
 def t_REAL(t):
@@ -94,11 +101,18 @@ def t_PRINT(t):
 
 def t_TRUE(t):
     r"""true"""
+    t.value = True
     return t
 
 
 def t_FALSE(t):
     r"""false"""
+    t.value = False
+    return t
+
+
+def t_TYPECONV(t):
+    r"""(inttofloat|floattoint)"""
     return t
 
 

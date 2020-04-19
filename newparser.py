@@ -1,6 +1,7 @@
 
 import ply.yacc as yacc
 
+import ast
 import names
 from lexer import lexer, tokens
 from helpers import *
@@ -28,8 +29,7 @@ variables = names.VariableArray()
 
 
 def p_input(p):
-    """input : expr
-             | statement"""
+    """input : expr"""
     p[0] = Node(p[1].output, p[1])
 
 
@@ -65,23 +65,7 @@ def p_binary_math_operator(p):
             | expr TIMES expr
             | expr DIV expr
             | expr POWER expr"""
-    left, right = p[1].output, p[3].output
-    t = check_type_match(left, right)
-    if p[2] == '+':
-        if t == int or t == str:
-            p[0] = Node(left + right, p[2], [p[1], p[3]])
-            return
-        else:
-            raise TypeError("Operands must be numeric or string for this operation")
-    check_numeric_type(left, right)
-    if p[2] == '-':
-        p[0] = Node(left - right, p[2], [p[1], p[3]])
-    elif p[2] == '*':
-        p[0] = Node(left * right, p[2], [p[1], p[3]])
-    elif p[2] == '/':
-        p[0] = Node(left / right, p[2], [p[1], p[3]])
-    elif p[2] == '^':
-        p[0] = Node(left ** right, p[2], [p[1], p[3]])
+    p[0] = ast.BinaryOperator(p[2], p[1], p[3])
 
 
 def p_binary_logical_operator(p):
@@ -141,7 +125,7 @@ def p_string(p):
 def p_number(p):
     """expr : NUMBER
             | REAL"""
-    p[0] = Node(p[1], p[1])
+    p[0] = ast.Number(p[1])
 
 
 def p_name(p):
