@@ -1,10 +1,7 @@
 
 import ply.yacc as yacc
-
+from lex import tokens
 import ast
-import names
-from lexer import lexer, tokens
-from helpers import *
 
 precedence = (
     ('left', 'ASSIGN'),
@@ -151,18 +148,3 @@ def p_print(p):
 
 
 parser = yacc.yacc()
-variables = names.VariableArray()
-# with open('collatz.orl', 'r') as f:
-#     program = f.read()
-while True:
-    program = ''
-    while line := input('>>> '):
-        program += line + '\n'
-    # lexer.input(program)
-    # for tok in lexer:
-    #     print(tok)
-    # print(program)
-    if program:
-        root = parser.parse(program)
-        print(root)
-        root.evaluate(variables)

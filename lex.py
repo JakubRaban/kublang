@@ -17,10 +17,12 @@ reserved = {
     'floattoint': 'TYPECONV'
 }
 
+
 tokens = [
     'PLUS', 'MINUS', 'TIMES', 'DIV', 'MOD', 'POWER', 'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'ASSIGN', 'EQ', 'NEQ',
     'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'SEP', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'NEWLINE', 'NOT', 'UMINUS'
 ] + list(reserved.values())
+
 
 t_PLUS    = r'\+'
 t_MINUS   = r'-'
