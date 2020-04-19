@@ -25,38 +25,31 @@ class Node:
         self.root = root
         self.children = children or []
 
-variables = names.VariableArray()
-
 
 def p_input(p):
-    """input : expr"""
-    p[0] = Node(p[1].output, p[1])
+    """input : expr
+             | statement"""
+    p[0] = ast.Input(p[1])
 
 
 def p_parentheses(p):
     """expr : LPAREN expr RPAREN"""
-    p[0] = Node(p[2].output, p[2])
+    p[0] = p[2]
 
 
 def p_declaration(p):
     """statement : type NAME"""
-    t = to_python_type(p[1].output)
-    variables.declare(p[2], t)
-    p[0] = Node((), p[2])
+    p[0] = ast.Declaration(p[1], ast.VariableName(p[2]))
 
 
 def p_assignment(p):
     """statement : NAME ASSIGN expr"""
-    variables.assign(p[1], p[3].output)
-    p[0] = Node((), p[2], [p[1], p[3]])
+    p[0] = ast.Assignment(ast.VariableName(p[1]), p[3])
 
 
 def p_assignment_and_declaration(p):
     """statement : type NAME ASSIGN expr"""
-    t = to_python_type(p[1].output)
-    variables.declare(p[2], t)
-    variables.assign(p[2], p[4].output)
-    p[0] = Node((), p[3], [p[1], p[2], p[4]])
+    p[0] = ast.DeclarationWithAssignment(p[1], ast.VariableName(p[2]), p[4])
 
 
 def p_binary_math_operator(p):
@@ -65,24 +58,18 @@ def p_binary_math_operator(p):
             | expr TIMES expr
             | expr DIV expr
             | expr POWER expr"""
-    p[0] = ast.BinaryOperator(p[2], p[1], p[3])
+    p[0] = ast.BinaryMathOperator(p[2], p[1], p[3])
 
 
 def p_binary_logical_operator(p):
     """expr : expr AND expr
             | expr OR expr"""
-    left, right = p[1].output, p[3].output
-    check_boolean_type(left, right)
-    if p[2] == '&&':
-        p[0] = Node(left and right, p[2], [p[1], p[3]])
-    elif p[2] == '||':
-        p[0] = Node(left or right, p[2], [p[1], p[3]])
+    p[0] = ast.BinaryLogicalOperator(p[2], p[1], p[3])
 
 
 def p_unary_logical_operator(p):
     """expr : NOT expr"""
-    operand = p[2].output
-    p[0] = Node(not operand, p[1], [p[2]])
+    p[0] = ast.UnaryLogicalOperator(p[1], p[2])
 
 
 def p_comparison(p):
@@ -92,34 +79,22 @@ def p_comparison(p):
             | expr GTE expr
             | expr LT expr
             | expr LTE expr"""
-    left, right = p[1].output, p[3].output
-    check_numeric_type(left, right)
-    if p[2] == '=':
-        p[0] = Node(left == right, p[2], [p[1], p[3]])
-    elif p[2] == '≠':
-        p[0] = Node(left != right, p[2], [p[1], p[3]])
-    elif p[2] == '>=':
-        p[0] = Node(left >= right, p[2], [p[1], p[3]])
-    elif p[2] == '>':
-        p[0] = Node(left > right, p[2], [p[1], p[3]])
-    elif p[2] == '<=':
-        p[0] = Node(left <= right, p[2], [p[1], p[3]])
-    elif p[2] == '<':
-        p[0] = Node(left < right, p[2], [p[1], p[3]])
+    p[0] = ast.Comparison(p[2], p[1], p[3])
 
 
 def p_if(p):
     """statement : IF LPAREN expr RPAREN LBRACE input RBRACE"""
-    check_boolean_type(p[3].output)
-    if p[3].output:
-        p[0] = Node(p[6].output, p[1], [p[3], p[6]])
-    else:
-        p[0] = Node((), p[1])
+    p[0] = ast.IfStatement(p[3], p[6])
+
+
+def p_while(p):
+    """statement : WHILE LPAREN expr RPAREN LBRACE input RBRACE"""
+    p[0] = ast.WhileStatement(p[3], p[6])
 
 
 def p_string(p):
     """expr : TEXT"""
-    p[0] = Node(p[1], p[1])
+    p[0] = ast.String(p[1])
 
 
 def p_number(p):
@@ -130,14 +105,13 @@ def p_number(p):
 
 def p_name(p):
     """expr : NAME"""
-    value = variables.get(p[1])
-    p[0] = Node(value, p[1])
+    p[0] = ast.VariableRead(p[1])
 
 
 def p_boolean(p):
     """expr : TRUE
             | FALSE"""
-    p[0] = Node(p[1], p[1])
+    p[0] = ast.TrueOrFalse(p[1])
 
 
 def p_type(p):
@@ -145,20 +119,17 @@ def p_type(p):
             | INT
             | FLOAT
             | BOOLEAN"""
-    p[0] = Node(p[1], p[1])
+    p[0] = ast.TypeName(p[1])
 
 
 parser = yacc.yacc()
+variables = names.VariableArray()
 while True:
-    s = input(">>> ")
-    if not s:
-        continue
-    lexer.input(s)
-    for tok in lexer:
-        print(tok)
-    root = parser.parse(s)
-    print(root.children)
-    if root is None:
-        print('Compiler error')
-    else:
-        print(root.output)
+    s = input('>>> ')
+    # lexer.input(s)
+    # for tok in lexer:
+    #     print(tok)
+    if s:
+        root = parser.parse(s)
+        print(root)
+        print('Result:', root.evaluate(variables))
