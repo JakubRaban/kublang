@@ -17,12 +17,6 @@ precedence = (
     ('nonassoc', 'SEP')
 )
 
-class Node:
-    def __init__(self, output, root, children=None):
-        self.output = output
-        self.root = root
-        self.children = children or []
-
 
 def p_input(p):
     """program : statements"""
