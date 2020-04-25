@@ -1,0 +1,5 @@
+int counter := 1
+if (3>2) {
+    int c := 6
+}
+print(c)

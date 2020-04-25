@@ -11,8 +11,10 @@ reserved = {
     'float': 'FLOAT',
     'string': 'STRING',
     'boolean': 'BOOLEAN',
+    'void': 'VOID',
     'fun': 'FUN',
     'print': 'PRINT',
+    'return': 'RETURN',
     'inttofloat': 'TYPECONV',
     'floattoint': 'TYPECONV'
 }

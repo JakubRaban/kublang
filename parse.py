@@ -106,6 +106,20 @@ def p_type_conversion(p):
         p[0] = ast.FloatToInt(p[3])
 
 
+def p_function_declaration(p):
+    """statement : rettype NAME LPAREN arglist RPAREN LBRACE statements retstatement RBRACE"""
+
+
+
+def p_argument_list(p):
+    """arglist : arglist COMMA arg
+               | arg"""
+
+
+def p_argument(p):
+    """arg : type NAME"""
+
+
 def p_string(p):
     """expr : TEXT"""
     p[0] = ast.String(p[1])
@@ -134,6 +148,18 @@ def p_type(p):
             | FLOAT
             | BOOLEAN"""
     p[0] = ast.TypeName(p[1])
+
+
+def p_returned_type(p):
+    """rettype : STRING
+               | INT
+               | FLOAT
+               | BOOLEAN
+               | VOID"""
+
+
+def p_return_statement(p):
+    """retstatement : RETURN expr"""
 
 
 def p_print(p):

@@ -13,7 +13,7 @@ class Node(abc.ABC):
         return ret
 
     @abc.abstractmethod
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         pass
 
     @abc.abstractmethod
@@ -29,8 +29,8 @@ class Program(Node):
     def __init__(self, program):
         self.program = program
 
-    def evaluate(self, variable_array):
-        self.program.evaluate(variable_array)
+    def evaluate(self, name_table):
+        self.program.evaluate(name_table)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -43,9 +43,9 @@ class Lines(Node):
     def __init__(self, lines: List[Node]):
         self.lines = lines
 
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         for line in self.lines:
-            line.evaluate(variable_array)
+            line.evaluate(name_table)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -58,7 +58,7 @@ class Number(Node):
     def __init__(self, value: Union[int, float]):
         self.value = value
 
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         return self.value
 
     def get_symbol(self) -> str:
@@ -74,8 +74,8 @@ class BinaryMathOperator(Node):
         self.left = left
         self.right = right
 
-    def evaluate(self, variable_array):
-        l, r = self.left.evaluate(variable_array), self.right.evaluate(variable_array)
+    def evaluate(self, name_table):
+        l, r = self.left.evaluate(name_table), self.right.evaluate(name_table)
         helpers.check_type_match(l, r)
         helpers.check_numeric_or_string_type(l, r)
         if self.operation == '+':
@@ -105,8 +105,8 @@ class BinaryLogicalOperator(Node):
         self.left = left
         self.right = right
 
-    def evaluate(self, variable_array):
-        l, r = self.left.evaluate(variable_array), self.right.evaluate(variable_array)
+    def evaluate(self, name_table):
+        l, r = self.left.evaluate(name_table), self.right.evaluate(name_table)
         helpers.check_boolean_type(l, r)
         if self.operation == '&&':
             return l and r
@@ -125,8 +125,8 @@ class UnaryLogicalOperator(Node):
         self.operator = operator
         self.operand = operand
 
-    def evaluate(self, variable_array):
-        o = self.operand.evaluate(variable_array)
+    def evaluate(self, name_table):
+        o = self.operand.evaluate(name_table)
         helpers.check_boolean_type(o)
         if self.operator == '!':
             return not o
@@ -144,8 +144,8 @@ class Comparison(Node):
         self.left = left
         self.right = right
 
-    def evaluate(self, variable_array):
-        l, r = self.left.evaluate(variable_array), self.right.evaluate(variable_array)
+    def evaluate(self, name_table):
+        l, r = self.left.evaluate(name_table), self.right.evaluate(name_table)
         helpers.check_type_match(l, r)
         helpers.check_numeric_type(l, r)
         if self.operation == '=':
@@ -173,9 +173,9 @@ class Declaration(Node):
         self.type_name = type_name
         self.var_name = var_name
 
-    def evaluate(self, variable_array):
-        our_type = helpers.to_python_type(self.type_name.evaluate(variable_array))
-        variable_array.declare(self.var_name.evaluate(variable_array), our_type)
+    def evaluate(self, name_table):
+        our_type = helpers.to_python_type(self.type_name.evaluate(name_table))
+        name_table.declare_variable(self.var_name.evaluate(name_table), our_type)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -189,9 +189,9 @@ class Assignment(Node):
         self.var_name = var_name
         self.value = value
 
-    def evaluate(self, variable_array):
-        l, r = self.var_name.evaluate(variable_array), self.value.evaluate(variable_array)
-        variable_array.assign(l, r)
+    def evaluate(self, name_table):
+        l, r = self.var_name.evaluate(name_table), self.value.evaluate(name_table)
+        name_table.assign_variable(l, r)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -206,9 +206,9 @@ class DeclarationWithAssignment(Node):
         self.var_name = var_name
         self.value = value
 
-    def evaluate(self, variable_array):
-        Declaration(self.type_name, self.var_name).evaluate(variable_array)
-        Assignment(self.var_name, self.value).evaluate(variable_array)
+    def evaluate(self, name_table):
+        Declaration(self.type_name, self.var_name).evaluate(name_table)
+        Assignment(self.var_name, self.value).evaluate(name_table)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -217,11 +217,29 @@ class DeclarationWithAssignment(Node):
         return [self.type_name, self.var_name, self.value]
 
 
+class FunctionDeclaration(Node):
+    def __init__(self, function_name, arguments, body, return_type, return_value):
+        self.function_name = function_name
+        self.arguments = arguments
+        self.body = body
+        self.return_type = return_type
+        self.return_value = return_value
+
+    def evaluate(self, name_table):
+        pass
+
+    def get_symbol(self) -> str:
+        return f'{super().get_symbol()}({self.function_name})'
+
+    def get_children(self) -> List:
+        return [self.arguments, self.body, self.return_type, self.return_value]
+
+
 class VariableName(Node):
     def __init__(self, name):
         self.name = name
 
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         return self.name
 
     def get_symbol(self) -> str:
@@ -235,7 +253,7 @@ class TypeName(Node):
     def __init__(self, name):
         self.name = name
 
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         return self.name
 
     def get_symbol(self) -> str:
@@ -249,8 +267,8 @@ class VariableRead(Node):
     def __init__(self, name):
         self.name = name
 
-    def evaluate(self, variable_array):
-        return variable_array.get(self.name)
+    def evaluate(self, name_table):
+        return name_table.get(self.name)
 
     def get_symbol(self) -> str:
         return f'{super().get_symbol()}({self.name})'
@@ -263,7 +281,7 @@ class String(Node):
     def __init__(self, text):
         self.text = text
 
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         return self.text
 
     def get_symbol(self) -> str:
@@ -277,7 +295,7 @@ class TrueOrFalse(Node):
     def __init__(self, value):
         self.value = value
 
-    def evaluate(self, variable_array):
+    def evaluate(self, name_table):
         return self.value
 
     def get_symbol(self) -> str:
@@ -292,11 +310,12 @@ class IfStatement(Node):
         self.condition = condition
         self.statement = statement
 
-    def evaluate(self, variable_array):
-        condition = self.condition.evaluate(variable_array)
+    def evaluate(self, name_table):
+        condition = self.condition.evaluate(name_table)
         helpers.check_boolean_type(condition)
         if condition:
-            self.statement.evaluate(variable_array)
+            self.statement.evaluate(name_table.add_scope())
+        name_table.remove_scope()
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -311,13 +330,15 @@ class IfElseStatement(Node):
         self.on_true_statement = on_true_statement
         self.on_false_statement = on_false_statement
 
-    def evaluate(self, variable_array):
-        condition = self.condition.evaluate(variable_array)
+    def evaluate(self, name_table):
+        condition = self.condition.evaluate(name_table)
         helpers.check_boolean_type(condition)
+        name_table.add_scope()
         if condition:
-            self.on_true_statement.evaluate(variable_array)
+            self.on_true_statement.evaluate(name_table)
         else:
-            self.on_false_statement.evaluate(variable_array)
+            self.on_false_statement.evaluate(name_table)
+        name_table.remove_scope()
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -331,12 +352,13 @@ class WhileStatement(Node):
         self.condition = condition
         self.statement = statement
 
-    def evaluate(self, variable_array):
-        condition = self.condition.evaluate(variable_array)
+    def evaluate(self, name_table):
+        condition = self.condition.evaluate(name_table)
         helpers.check_boolean_type(condition)
         while condition:
-            self.statement.evaluate(variable_array)
-            condition = self.condition.evaluate(variable_array)
+            self.statement.evaluate(name_table.add_scope())
+            name_table.remove_scope()
+            condition = self.condition.evaluate(name_table)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -349,8 +371,8 @@ class Print(Node):
     def __init__(self, expression):
         self.expression = expression
 
-    def evaluate(self, variable_array):
-        print(self.expression.evaluate(variable_array))
+    def evaluate(self, name_table):
+        print(self.expression.evaluate(name_table))
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -363,8 +385,8 @@ class IntToFloat(Node):
     def __init__(self, number):
         self.number = number
 
-    def evaluate(self, variable_array):
-        number = self.number.evaluate(variable_array)
+    def evaluate(self, name_table):
+        number = self.number.evaluate(name_table)
         helpers.check_int_type(number)
         return float(number)
 
@@ -379,8 +401,8 @@ class FloatToInt(Node):
     def __init__(self, number):
         self.number = number
 
-    def evaluate(self, variable_array):
-        number = self.number.evaluate(variable_array)
+    def evaluate(self, name_table):
+        number = self.number.evaluate(name_table)
         helpers.check_float_type(number)
         return int(number)
 

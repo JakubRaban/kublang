@@ -7,7 +7,7 @@ def execute(code):
     if len(code) > 1:
         root = parser.parse(code)
         print(root)
-        root.evaluate(names.VariableArray())
+        root.evaluate(names.NameTable())
 
 
 choice = 0
