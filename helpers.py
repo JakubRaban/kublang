@@ -8,6 +8,8 @@ def to_python_type(lang_type):
         t = float
     elif lang_type == 'boolean':
         t = bool
+    elif lang_type == 'void':
+        t = type(None)
     return t
 
 

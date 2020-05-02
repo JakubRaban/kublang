@@ -38,8 +38,12 @@ def p_parentheses(p):
 
 
 def p_declaration(p):
-    """statement : type NAME"""
-    p[0] = ast.Declaration(p[1], ast.VariableName(p[2]))
+    """statement : type NAME
+                 | GLOBAL type NAME"""
+    if len(p) == 3:
+        p[0] = ast.Declaration(p[1], ast.VariableName(p[2]), is_global=False)
+    else:
+        p[0] = ast.Declaration(p[2], ast.VariableName(p[3]), is_global=True)
 
 
 def p_assignment(p):
@@ -48,8 +52,12 @@ def p_assignment(p):
 
 
 def p_assignment_and_declaration(p):
-    """statement : type NAME ASSIGN expr"""
-    p[0] = ast.DeclarationWithAssignment(p[1], ast.VariableName(p[2]), p[4])
+    """statement : type NAME ASSIGN expr
+                 | GLOBAL type NAME ASSIGN expr"""
+    if len(p) == 5:
+        p[0] = ast.DeclarationWithAssignment(p[1], ast.VariableName(p[2]), p[4], is_global=False)
+    else:
+        p[0] = ast.DeclarationWithAssignment(p[2], ast.VariableName(p[3]), p[5], is_global=True)
 
 
 def p_binary_math_operator(p):
@@ -107,17 +115,56 @@ def p_type_conversion(p):
 
 
 def p_function_declaration(p):
-    """statement : rettype NAME LPAREN arglist RPAREN LBRACE statements retstatement RBRACE"""
+    """statement : type NAME LPAREN arglist RPAREN LBRACE statements RBRACE"""
+    p[0] = ast.FunctionDeclaration(ast.VariableName(p[2]), p[4], p[7], p[1])
 
+
+def p_function_call(p):
+    """statement : NAME LPAREN exprlist RPAREN"""
+    p[0] = ast.FunctionCall(ast.VariableName(p[1]), p[3])
+
+
+def p_function_call_expr(p):
+    """expr : NAME LPAREN exprlist RPAREN"""
+    p[0] = ast.FunctionCall(ast.VariableName(p[1]), p[3])
+
+
+def p_expression_list(p):
+    """exprlist : exprlist COMMA expr
+                | expr"""
+    if len(p) == 4:
+        p[0] = ast.FunctionCallArguments(p[1].arguments + [p[3]])
+    else:
+        p[0] = ast.FunctionCallArguments([p[1]])
+
+
+def p_expression_list_empty(p):
+    """exprlist :"""
+    p[0] = ast.FunctionCallArguments([])
+
+
+def p_return(p):
+    """statement : RETURN expr"""
+    p[0] = ast.ReturnStatement(p[2])
 
 
 def p_argument_list(p):
     """arglist : arglist COMMA arg
                | arg"""
+    if len(p) == 4:
+        p[0] = ast.FunctionArguments(p[1].arguments + [p[3]])
+    else:
+        p[0] = ast.FunctionArguments([p[1]])
+
+
+def p_empty_argument_list(p):
+    """arglist :"""
+    p[0] = ast.FunctionArguments([])
 
 
 def p_argument(p):
     """arg : type NAME"""
+    p[0] = ast.FunctionArgument(p[1], ast.VariableName(p[2]))
 
 
 def p_string(p):
@@ -146,20 +193,9 @@ def p_type(p):
     """type : STRING
             | INT
             | FLOAT
-            | BOOLEAN"""
+            | BOOLEAN
+            | VOID"""
     p[0] = ast.TypeName(p[1])
-
-
-def p_returned_type(p):
-    """rettype : STRING
-               | INT
-               | FLOAT
-               | BOOLEAN
-               | VOID"""
-
-
-def p_return_statement(p):
-    """retstatement : RETURN expr"""
 
 
 def p_print(p):

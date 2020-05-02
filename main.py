@@ -1,10 +1,12 @@
 
 from parse import parser
+import lex
 import names
 
 
 def execute(code):
     if len(code) > 1:
+        # lex.process_tokens(code)
         root = parser.parse(code)
         print(root)
         root.evaluate(names.NameTable())

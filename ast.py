@@ -1,6 +1,7 @@
 
 import abc
 from typing import List, Union
+import names
 
 import helpers
 
@@ -45,7 +46,9 @@ class Lines(Node):
 
     def evaluate(self, name_table):
         for line in self.lines:
-            line.evaluate(name_table)
+            result = line.evaluate(name_table)
+            if isinstance(line, ReturnStatement):
+                return result
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -169,13 +172,17 @@ class Comparison(Node):
 
 
 class Declaration(Node):
-    def __init__(self, type_name, var_name):
+    def __init__(self, type_name, var_name, is_global=False):
         self.type_name = type_name
         self.var_name = var_name
+        self.is_global = is_global
 
     def evaluate(self, name_table):
-        our_type = helpers.to_python_type(self.type_name.evaluate(name_table))
-        name_table.declare_variable(self.var_name.evaluate(name_table), our_type)
+        type_name = self.type_name.evaluate(name_table)
+        if type_name == 'void':
+            raise ValueError("Variables cannot be of type void")
+        our_type = helpers.to_python_type(type_name)
+        name_table.declare_variable(self.var_name.evaluate(name_table), our_type, self.is_global)
 
     def get_symbol(self) -> str:
         return super().get_symbol()
@@ -201,13 +208,14 @@ class Assignment(Node):
 
 
 class DeclarationWithAssignment(Node):
-    def __init__(self, type_name, var_name, value):
+    def __init__(self, type_name, var_name, value, is_global):
         self.type_name = type_name
         self.var_name = var_name
         self.value = value
+        self.is_global = is_global
 
     def evaluate(self, name_table):
-        Declaration(self.type_name, self.var_name).evaluate(name_table)
+        Declaration(self.type_name, self.var_name, self.is_global).evaluate(name_table)
         Assignment(self.var_name, self.value).evaluate(name_table)
 
     def get_symbol(self) -> str:
@@ -218,21 +226,111 @@ class DeclarationWithAssignment(Node):
 
 
 class FunctionDeclaration(Node):
-    def __init__(self, function_name, arguments, body, return_type, return_value):
+    def __init__(self, function_name, arguments, body, return_type):
         self.function_name = function_name
         self.arguments = arguments
         self.body = body
         self.return_type = return_type
-        self.return_value = return_value
 
     def evaluate(self, name_table):
-        pass
+        arguments = [(helpers.to_python_type(argument[0]), argument[1]) for argument in self.arguments.evaluate(name_table)]
+        name_table.declare_function(
+            fun_name=self.function_name.evaluate(name_table),
+            arguments=arguments,
+            body=self.body,
+            return_type=helpers.to_python_type(self.return_type.evaluate(name_table)),
+        )
 
     def get_symbol(self) -> str:
-        return f'{super().get_symbol()}({self.function_name})'
+        return super().get_symbol()
 
     def get_children(self) -> List:
-        return [self.arguments, self.body, self.return_type, self.return_value]
+        return [self.return_type, self.function_name, self.arguments, self.body]
+
+
+class FunctionArguments(Node):
+    def __init__(self, arguments):
+        self.arguments = arguments
+
+    def evaluate(self, name_table):
+        return [argument.evaluate(name_table) for argument in self.arguments]
+
+    def get_symbol(self) -> str:
+        return f"{super().get_symbol()}{'(empty)' if not self.arguments else ''}"
+
+    def get_children(self) -> List:
+        return self.arguments
+
+
+class FunctionArgument(Node):
+    def __init__(self, type_name, arg_name):
+        self.type_name = type_name
+        self.arg_name = arg_name
+
+    def evaluate(self, name_table):
+        return self.type_name.evaluate(name_table), self.arg_name.evaluate(name_table)
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.type_name, self.arg_name]
+
+
+class ReturnStatement(Node):
+    def __init__(self, expression):
+        self.expression = expression
+
+    def evaluate(self, name_table):
+        return self.expression.evaluate(name_table)
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.expression]
+
+
+class FunctionCall(Node):
+    def __init__(self, name, arguments):
+        self.name = name
+        self.arguments = arguments
+
+    def evaluate(self, name_table):
+        function_spec = name_table.get_function(self.name.evaluate(name_table))
+        call_spec = self.arguments.evaluate(name_table)
+        if (required := len(function_spec['arguments'])) != (provided := len(call_spec)):
+            raise ValueError(f"Function '{self.name}' requires {required} arguments but got {provided}")
+        function_variables = {}
+        for index, matched_arg in enumerate(zip(function_spec['arguments'], call_spec)):
+            if (expected_type := matched_arg[0][0]) != (actual_type := matched_arg[1][0]):
+                raise TypeError(f"Type mismatch in argument number {index}: expected {expected_type}, got {actual_type}")
+            function_variables[matched_arg[0][1]] = {'type': matched_arg[1][0], 'value': matched_arg[1][1]}
+        function_name_table = names.NameTable(function_variables)
+        function_return = function_spec['body'].evaluate(function_name_table)
+        if not isinstance(function_return, function_spec['return_type']):
+            raise TypeError(f"Value returned from function is of type {type(function_return)} but expected {function_spec['return_type']}")
+        return function_return
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return [self.name, self.arguments]
+
+
+class FunctionCallArguments(Node):
+    def __init__(self, arguments):
+        self.arguments = arguments
+
+    def evaluate(self, name_table):
+        return [(type(argument), argument) for argument in [arg.evaluate(name_table) for arg in self.arguments]]
+
+    def get_symbol(self) -> str:
+        return super().get_symbol()
+
+    def get_children(self) -> List:
+        return self.arguments
 
 
 class VariableName(Node):
@@ -268,7 +366,7 @@ class VariableRead(Node):
         self.name = name
 
     def evaluate(self, name_table):
-        return name_table.get(self.name)
+        return name_table.get_variable(self.name)
 
     def get_symbol(self) -> str:
         return f'{super().get_symbol()}({self.name})'

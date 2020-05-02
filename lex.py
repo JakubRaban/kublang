@@ -16,13 +16,14 @@ reserved = {
     'print': 'PRINT',
     'return': 'RETURN',
     'inttofloat': 'TYPECONV',
-    'floattoint': 'TYPECONV'
+    'floattoint': 'TYPECONV',
+    'global': 'GLOBAL',
 }
 
 
 tokens = [
     'PLUS', 'MINUS', 'TIMES', 'DIV', 'MOD', 'POWER', 'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'ASSIGN', 'EQ', 'NEQ',
-    'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'SEP', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'NEWLINE', 'NOT', 'UMINUS'
+    'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'SEP', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'NEWLINE', 'NOT', 'UMINUS',
 ] + list(reserved.values())
 
 
@@ -98,17 +99,14 @@ t_ignore = " \t"
 lexer = lex.lex()
 
 
-# def process_tokens():
-#     data = '''
-#     while(3+i>=2) { print("xd") }
-#     ej = 3+2
-#      '''
-#     global lexer
-#     lexer.input(data)
-#     while True:
-#         tok = lexer.token()
-#         if not tok:
-#             break  # No more input
-#         print(tok)
+def process_tokens(data):
+    global lexer
+    lexer.input(data)
+    while True:
+        tok = lexer.token()
+        if not tok:
+            break  # No more input
+        print(tok)
+
 #
 # process_tokens()
