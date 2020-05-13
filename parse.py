@@ -70,6 +70,11 @@ def p_binary_math_operator(p):
     p[0] = ast.BinaryMathOperator(p[2], p[1], p[3])
 
 
+def p_unary_math_operator(p):
+    """expr : MINUS expr %prec UMINUS"""
+    p[0] = ast.UnaryMathOperator(p[1], p[2])
+
+
 def p_binary_logical_operator(p):
     """expr : expr AND expr
             | expr OR expr"""

@@ -102,6 +102,24 @@ class BinaryMathOperator(Node):
         return f"{super().get_symbol()}({self.operation})"
 
 
+class UnaryMathOperator(Node):
+    def __init__(self, operator, operand):
+        self.operator = operator
+        self.operand = operand
+
+    def evaluate(self, name_table):
+        o = self.operand.evaluate(name_table)
+        helpers.check_numeric_type(o)
+        if self.operator == '-':
+            return -o
+
+    def get_symbol(self) -> str:
+        return f'{super().get_symbol()}({self.operator})'
+
+    def get_children(self) -> List:
+        return [self.operand]
+
+
 class BinaryLogicalOperator(Node):
     def __init__(self, operation, left, right):
         self.operation = operation
