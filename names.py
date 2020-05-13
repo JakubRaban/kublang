@@ -2,9 +2,9 @@ from typing import Any, Optional
 
 
 class NameTable:
-    def __init__(self, initial_state: Optional[dict] = None):
-        self.variables = [{}] if initial_state is None else [initial_state]
-        self.functions = {}
+    def __init__(self, initial_variables: Optional[dict] = None, initial_functions: Optional[dict] = None):
+        self.variables = [{}] if initial_variables is None else [initial_variables]
+        self.functions = initial_functions or {}
 
     def declare_variable(self, var_name: str, var_type: type, is_global: bool = False):
         if self._get_scope_with_variable(var_name):

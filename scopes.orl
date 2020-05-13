@@ -1,5 +1,0 @@
-string abc(string a, string b) {
-    return a+b
-}
-string xd := abc("haha", "lol")
-print(xd + "xdd")

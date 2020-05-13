@@ -80,6 +80,10 @@ def t_TEXT(t):
 def t_NAME(t):
     r"""[a-zA-Z_][a-zA-Z0-9_]*"""
     t.type = reserved.get(t.value, 'NAME')
+    if t.value == 'true':
+        t.value = True
+    elif t.value == 'false':
+        t.value = False
     return t
 
 

@@ -305,8 +305,8 @@ class FunctionCall(Node):
         for index, matched_arg in enumerate(zip(function_spec['arguments'], call_spec)):
             if (expected_type := matched_arg[0][0]) != (actual_type := matched_arg[1][0]):
                 raise TypeError(f"Type mismatch in argument number {index}: expected {expected_type}, got {actual_type}")
-            function_variables[matched_arg[0][1]] = {'type': matched_arg[1][0], 'value': matched_arg[1][1]}
-        function_name_table = names.NameTable(function_variables)
+            function_variables[matched_arg[0][1]] = {'type': actual_type, 'value': matched_arg[1][1]}
+        function_name_table = names.NameTable(function_variables, name_table.functions)
         function_return = function_spec['body'].evaluate(function_name_table)
         if not isinstance(function_return, function_spec['return_type']):
             raise TypeError(f"Value returned from function is of type {type(function_return)} but expected {function_spec['return_type']}")
