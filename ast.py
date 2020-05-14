@@ -25,6 +25,11 @@ class Node(abc.ABC):
     def get_children(self) -> List:
         pass
 
+    @property
+    @abc.abstractmethod
+    def is_constant(self) -> bool:
+        pass
+
 
 class Program(Node):
     def __init__(self, program):
@@ -38,6 +43,10 @@ class Program(Node):
 
     def get_children(self) -> List:
         return [self.program]
+
+    @property
+    def is_constant(self) -> bool:
+        return self.program.is_constant
 
 
 class Lines(Node):
@@ -56,6 +65,10 @@ class Lines(Node):
     def get_children(self) -> List[Node]:
         return self.lines
 
+    @property
+    def is_constant(self) -> bool:
+        return all([line.is_constant for line in self.lines])
+
 
 class Number(Node):
     def __init__(self, value: Union[int, float]):
@@ -69,6 +82,10 @@ class Number(Node):
 
     def get_children(self) -> List[str]:
         return []
+
+    @property
+    def is_constant(self) -> bool:
+        return True
 
 
 class BinaryMathOperator(Node):
@@ -89,7 +106,10 @@ class BinaryMathOperator(Node):
         elif self.operation == '*':
             return l * r
         elif self.operation == '/':
-            return l / r
+            res = l / r
+            if res - int(res) == 0:
+                res = int(res)
+            return res
         elif self.operation == '^':
             return l ** r
         elif self.operation == '%':
@@ -100,6 +120,10 @@ class BinaryMathOperator(Node):
 
     def get_symbol(self) -> str:
         return f"{super().get_symbol()}({self.operation})"
+
+    @property
+    def is_constant(self) -> bool:
+        return self.left.is_constant and self.right.is_constant
 
 
 class UnaryMathOperator(Node):
@@ -118,6 +142,10 @@ class UnaryMathOperator(Node):
 
     def get_children(self) -> List:
         return [self.operand]
+
+    @property
+    def is_constant(self) -> bool:
+        return self.operand.is_constant
 
 
 class BinaryLogicalOperator(Node):
@@ -140,6 +168,10 @@ class BinaryLogicalOperator(Node):
     def get_children(self) -> List:
         return [self.left, self.right]
 
+    @property
+    def is_constant(self) -> bool:
+        return self.left.is_constant and self.right.is_constant
+
 
 class UnaryLogicalOperator(Node):
     def __init__(self, operator, operand):
@@ -157,6 +189,10 @@ class UnaryLogicalOperator(Node):
 
     def get_children(self) -> List:
         return [self.operand]
+
+    @property
+    def is_constant(self) -> bool:
+        return self.operand.is_constant
 
 
 class Comparison(Node):
@@ -188,6 +224,10 @@ class Comparison(Node):
     def get_children(self) -> List:
         return [self.left, self.right]
 
+    @property
+    def is_constant(self) -> bool:
+        return self.left.is_constant and self.right.is_constant
+
 
 class Declaration(Node):
     def __init__(self, type_name, var_name, is_global=False):
@@ -208,6 +248,10 @@ class Declaration(Node):
     def get_children(self) -> List:
         return [self.type_name, self.var_name]
 
+    @property
+    def is_constant(self) -> bool:
+        return False
+
 
 class Assignment(Node):
     def __init__(self, var_name, value):
@@ -223,6 +267,10 @@ class Assignment(Node):
 
     def get_children(self) -> List:
         return [self.var_name, self.value]
+
+    @property
+    def is_constant(self) -> bool:
+        return False
 
 
 class DeclarationWithAssignment(Node):
@@ -242,6 +290,10 @@ class DeclarationWithAssignment(Node):
     def get_children(self) -> List:
         return [self.type_name, self.var_name, self.value]
 
+    @property
+    def is_constant(self) -> bool:
+        return False
+
 
 class FunctionDeclaration(Node):
     def __init__(self, function_name, arguments, body, return_type):
@@ -251,7 +303,8 @@ class FunctionDeclaration(Node):
         self.return_type = return_type
 
     def evaluate(self, name_table):
-        arguments = [(helpers.to_python_type(argument[0]), argument[1]) for argument in self.arguments.evaluate(name_table)]
+        arguments = [(helpers.to_python_type(argument[0]), argument[1])
+                     for argument in self.arguments.evaluate(name_table)]
         name_table.declare_function(
             fun_name=self.function_name.evaluate(name_table),
             arguments=arguments,
@@ -264,6 +317,10 @@ class FunctionDeclaration(Node):
 
     def get_children(self) -> List:
         return [self.return_type, self.function_name, self.arguments, self.body]
+
+    @property
+    def is_constant(self) -> bool:
+        return False
 
 
 class FunctionArguments(Node):
@@ -278,6 +335,10 @@ class FunctionArguments(Node):
 
     def get_children(self) -> List:
         return self.arguments
+
+    @property
+    def is_constant(self) -> bool:
+        return True
 
 
 class FunctionArgument(Node):
@@ -294,6 +355,10 @@ class FunctionArgument(Node):
     def get_children(self) -> List:
         return [self.type_name, self.arg_name]
 
+    @property
+    def is_constant(self) -> bool:
+        return True
+
 
 class ReturnStatement(Node):
     def __init__(self, expression):
@@ -307,6 +372,10 @@ class ReturnStatement(Node):
 
     def get_children(self) -> List:
         return [self.expression]
+
+    @property
+    def is_constant(self) -> bool:
+        return self.expression.is_constant
 
 
 class FunctionCall(Node):
@@ -336,6 +405,10 @@ class FunctionCall(Node):
     def get_children(self) -> List:
         return [self.name, self.arguments]
 
+    @property
+    def is_constant(self) -> bool:
+        return False
+
 
 class FunctionCallArguments(Node):
     def __init__(self, arguments):
@@ -349,6 +422,10 @@ class FunctionCallArguments(Node):
 
     def get_children(self) -> List:
         return self.arguments
+
+    @property
+    def is_constant(self) -> bool:
+        return all([arg.is_constant for arg in self.arguments])
 
 
 class VariableName(Node):
@@ -364,6 +441,10 @@ class VariableName(Node):
     def get_children(self) -> List:
         return []
 
+    @property
+    def is_constant(self) -> bool:
+        return True
+
 
 class TypeName(Node):
     def __init__(self, name):
@@ -377,6 +458,10 @@ class TypeName(Node):
 
     def get_children(self) -> List:
         return []
+
+    @property
+    def is_constant(self) -> bool:
+        return True
 
 
 class VariableRead(Node):
@@ -392,6 +477,10 @@ class VariableRead(Node):
     def get_children(self) -> List:
         return []
 
+    @property
+    def is_constant(self) -> bool:
+        return False
+
 
 class String(Node):
     def __init__(self, text):
@@ -406,6 +495,10 @@ class String(Node):
     def get_children(self) -> List:
         return []
 
+    @property
+    def is_constant(self) -> bool:
+        return True
+
 
 class TrueOrFalse(Node):
     def __init__(self, value):
@@ -419,6 +512,10 @@ class TrueOrFalse(Node):
 
     def get_children(self) -> List:
         return []
+
+    @property
+    def is_constant(self) -> bool:
+        return True
 
 
 class IfStatement(Node):
@@ -438,6 +535,10 @@ class IfStatement(Node):
 
     def get_children(self) -> List:
         return [self.condition, self.statement]
+
+    @property
+    def is_constant(self) -> bool:
+        return False
 
 
 class IfElseStatement(Node):
@@ -462,6 +563,10 @@ class IfElseStatement(Node):
     def get_children(self) -> List:
         return [self.condition, self.on_true_statement, self.on_false_statement]
 
+    @property
+    def is_constant(self) -> bool:
+        return False
+
 
 class WhileStatement(Node):
     def __init__(self, condition, statement):
@@ -482,6 +587,10 @@ class WhileStatement(Node):
     def get_children(self) -> List:
         return [self.condition, self.statement]
 
+    @property
+    def is_constant(self) -> bool:
+        return False
+
 
 class Print(Node):
     def __init__(self, expression):
@@ -495,6 +604,9 @@ class Print(Node):
 
     def get_children(self) -> List:
         return [self.expression]
+
+    def is_constant(self) -> bool:
+        return self.expression.is_constant
 
 
 class IntToFloat(Node):
@@ -512,6 +624,10 @@ class IntToFloat(Node):
     def get_children(self) -> List:
         return [self.number]
 
+    @property
+    def is_constant(self) -> bool:
+        return self.number.is_constant
+
 
 class FloatToInt(Node):
     def __init__(self, number):
@@ -527,3 +643,7 @@ class FloatToInt(Node):
 
     def get_children(self) -> List:
         return [self.number]
+
+    @property
+    def is_constant(self) -> bool:
+        return self.number.is_constant

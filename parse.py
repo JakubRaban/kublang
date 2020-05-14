@@ -67,7 +67,43 @@ def p_binary_math_operator(p):
             | expr DIV expr
             | expr POWER expr
             | expr MOD expr"""
-    p[0] = ast.BinaryMathOperator(p[2], p[1], p[3])
+    optimized = False
+    if p[2] == '/':
+        optimized = True
+        if isinstance(p[3], ast.Number) and p[3].value == 1:
+            p[0] = p[1]
+        else:
+            optimized = False
+    elif p[2] == '*':
+        optimized = True
+        if isinstance(p[3], ast.Number):
+            if p[3].value == 1:
+                p[0] = p[1]
+            elif p[3].value == 2:
+                p[0] = ast.BinaryMathOperator('+', p[1], p[1])
+        elif isinstance(p[1], ast.Number):
+            if p[1].value == 1:
+                p[0] = p[3]
+            elif p[1].value == 2:
+                p[0] = ast.BinaryMathOperator('+', p[3], p[3])
+        else:
+            optimized = False
+    elif p[2] == '+':
+        optimized = True
+        if isinstance(p[3], ast.Number) and p[3].value == 0:
+            p[0] = p[1]
+        elif isinstance(p[1], ast.Number) and p[1].value == 0:
+            p[0] = p[3]
+        else:
+            optimized = False
+    elif p[2] == '-' and isinstance(p[3], ast.Number) and p[3].value == 0:
+        p[0] = p[1]
+        optimized = True
+    elif p[2] == '^' and isinstance(p[3], ast.Number) and p[3].value == 2:
+        p[0] = ast.BinaryMathOperator('*', p[1], p[1])
+        optimized = True
+    if not optimized:
+        p[0] = ast.BinaryMathOperator(p[2], p[1], p[3])
 
 
 def p_unary_math_operator(p):
