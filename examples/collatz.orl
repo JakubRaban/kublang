@@ -1,6 +1,6 @@
-
-int a := 2 + 0
-int b := 2 * 1
-int c := 3 * 2
-int d := 4 ^ 2
-print(a+b*c+d)
+int limit := 10
+int i := 0
+while(i < limit - 2) {
+    print(i)
+    i := i + 1
+}

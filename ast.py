@@ -8,7 +8,7 @@ import helpers
 
 class Node(abc.ABC):
     def __str__(self, level=0):
-        ret = '\t' * level + self.get_symbol() + '\n'
+        ret = '.   ' * level + self.get_symbol() + '\n'
         for child in self.get_children():
             ret += child.__str__(level + 1)
         return ret
@@ -467,8 +467,18 @@ class WhileStatement(Node):
     def __init__(self, condition, statement):
         self.condition = condition
         self.statement = statement
+        self.constant = None
+        self.constant_evaluated = None
 
     def evaluate(self, name_table):
+        if self.constant == 'right':
+            self.constant_evaluated = self.condition.right.evaluate(name_table)
+            self.condition = Comparison(self.condition.operation, self.condition.left,
+                                        GenericExpression(self.constant_evaluated))
+        elif self.constant == 'left':
+            self.constant_evaluated = self.condition.left.evaluate(name_table)
+            self.condition = Comparison(self.condition.operation, GenericExpression(self.constant_evaluated),
+                                        self.condition.right)
         condition = self.condition.evaluate(name_table)
         helpers.check_boolean_type(condition)
         while condition:
@@ -481,6 +491,9 @@ class WhileStatement(Node):
 
     def get_children(self) -> List:
         return [self.condition, self.statement]
+
+    def set_constant(self, side: str):
+        self.constant = side
 
 
 class Print(Node):
@@ -527,3 +540,17 @@ class FloatToInt(Node):
 
     def get_children(self) -> List:
         return [self.number]
+
+
+class GenericExpression(Node):
+    def __init__(self, value):
+        self.value = value
+
+    def evaluate(self, name_table):
+        return self.value
+
+    def get_symbol(self) -> str:
+        return f'{super().get_symbol()}({self.value})'
+
+    def get_children(self) -> List:
+        return []

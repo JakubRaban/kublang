@@ -12,7 +12,6 @@ reserved = {
     'string': 'STRING',
     'boolean': 'BOOLEAN',
     'void': 'VOID',
-    'fun': 'FUN',
     'print': 'PRINT',
     'return': 'RETURN',
     'inttofloat': 'TYPECONV',
@@ -23,30 +22,29 @@ reserved = {
 
 tokens = [
     'PLUS', 'MINUS', 'TIMES', 'DIV', 'MOD', 'POWER', 'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'ASSIGN', 'EQ', 'NEQ',
-    'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'SEP', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'NEWLINE', 'NOT', 'UMINUS',
+    'LT', 'LTE', 'GT', 'GTE', 'OR', 'AND', 'COMMA', 'REAL', 'NUMBER', 'NAME', 'TEXT', 'NEWLINE', 'NOT', 'UMINUS',
 ] + list(reserved.values())
 
 
-t_PLUS    = r'\+'
-t_MINUS   = r'-'
-t_TIMES   = r'\*'
-t_DIV     = r'/'
-t_MOD     = r'%'
-t_POWER   = r'\^'
-t_LPAREN  = r'\('
-t_RPAREN  = r'\)'
-t_LBRACE  = r'{'
-t_RBRACE  = r'}'
-t_ASSIGN  = r':='
-t_NOT     = r'!'
-t_EQ      = r'='
-t_NEQ     = r'≠'
-t_LT      = r'<'
-t_LTE     = r'<='
-t_GT      = r'>'
-t_GTE     = r'>='
-t_COMMA   = r'\,'
-t_SEP     = r';'
+t_PLUS   = r'\+'
+t_MINUS  = r'-'
+t_TIMES  = r'\*'
+t_DIV    = r'/'
+t_MOD    = r'%'
+t_POWER  = r'\^'
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_LBRACE = r'{'
+t_RBRACE = r'}'
+t_ASSIGN = r':='
+t_NOT    = r'!'
+t_EQ     = r'='
+t_NEQ    = r'≠'
+t_LT     = r'<'
+t_LTE    = r'<='
+t_GT     = r'>'
+t_GTE    = r'>='
+t_COMMA  = r'\,'
 
 
 def t_OR(t):

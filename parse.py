@@ -14,7 +14,6 @@ precedence = (
     ('right', 'UMINUS'),
     ('right', 'POWER'),
     ('nonassoc', 'LPAREN', 'RPAREN'),
-    ('nonassoc', 'SEP')
 )
 
 

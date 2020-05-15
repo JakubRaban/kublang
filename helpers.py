@@ -1,3 +1,5 @@
+import ast
+
 
 def to_python_type(lang_type):
     if lang_type == 'int':
@@ -55,3 +57,31 @@ def check_numeric_or_string_type(*values):
         check_numeric_type(*values)
     except TypeError:
         check_string_type(*values)
+
+
+def get_accessed_variables(node):
+    variables = set()
+
+    def traverse(n):
+        nonlocal variables
+        if isinstance(n, ast.VariableRead):
+            variables.add(n.name)
+        for child in n.get_children():
+            traverse(child)
+
+    traverse(node)
+    return variables
+
+
+def get_assigned_variables(node):
+    variables = set()
+
+    def traverse(n):
+        nonlocal variables
+        if isinstance(n, (ast.Assignment, ast.DeclarationWithAssignment)):
+            variables.add(n.var_name.name)
+        for child in n.get_children():
+            traverse(child)
+
+    traverse(node)
+    return variables
